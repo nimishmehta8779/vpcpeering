@@ -14,9 +14,9 @@ resource "aws_vpc_peering_connection" "vpc_peer_owner" {
 }
 
 resource "aws_vpc_peering_connection_accepter" "vpc_peer_aceepter" {
-    count = local.count
+   count = local.count
     provider = aws.accepter
-    vpc_peering_connection_id = aws_vpc_peering_connection.vpc_peer_owner.id
+    vpc_peering_connection_id = aws_vpc_peering_connection.vpc_peer_owner[0].id
     auto_accept = true
 
     tags = {
@@ -35,11 +35,11 @@ resource "aws_route_table" "accepter_vpn_route_table" {
 }
 
 resource "aws_route" "accepter_vpn_route_table" {
-    count = var.enabled ? 1 : 0
+    count = local.count
     provider = aws.accepter
-    route_table_id = aws_route_table.accepter_vpn_route_table.id
-    destination_cidr_block = "10.0.0.0/16"
-    vpc_peering_connection_id = aws_vpc_peering_connection.vpc_peer_owner.id
+    route_table_id = aws_route_table.accepter_vpn_route_table[0].id
+    destination_cidr_block = var.owner_vpc_subnet_cidr
+    vpc_peering_connection_id = aws_vpc_peering_connection.vpc_peer_owner[0].id
 }
 
 // Create route table in source account
@@ -53,9 +53,9 @@ resource "aws_route_table" "source_vpn_route_table" {
 }
 
 resource "aws_route" "vpn_route_source" {
-	count = var.enabled ? 1 : 0
-        route_table_id = aws_route_table.source_vpn_route_table.id
-        destination_cidr_block = "10.20.0.0/16"
-        vpc_peering_connection_id = aws_vpc_peering_connection.vpc_peer_owner.id
+	count = local.count
+    route_table_id = aws_route_table.source_vpn_route_table[0].id
+    destination_cidr_block = var.accepter_vpc_subnet_cidr
+    vpc_peering_connection_id = aws_vpc_peering_connection.vpc_peer_owner[0].id
 }
 
